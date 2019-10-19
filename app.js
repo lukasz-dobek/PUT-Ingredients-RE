@@ -10,9 +10,9 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
-// import indexRouter from './routes/index';
-
-const indexRouter = require('./routes/index');
+const documentRouter = require('./routes/document');
+const ElasticSearchHandler = require('./ElasticSearchHandler');
+const handler = new ElasticSearchHandler();
 
 const app = express();
 
@@ -22,6 +22,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+app.use('/document/', documentRouter);
+
+app.get('/status', (req, res) => {
+    handler.clusterHealth().then(result => {
+        res.send(result);
+      });
+});
 
 module.exports = app;
