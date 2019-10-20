@@ -10,6 +10,26 @@ module.exports = class ElasticSearchHandler {
         this.client = new Client({ node: address });
     }
 
+    async createIndex(indexName, indexMapping) {
+        let promise = await this.client.indices.exists({
+            index: indexName,
+        });
+        if (promise.statusCode === 404) {
+            try {
+                let createIndexPromise = await this.client.indices.create({
+                    index: indexName,
+                    body: indexMapping,
+                });
+            } catch (indexCreatingError) {
+                console.log(indexCreatingError);
+                return false;
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     async clusterHealth() {
         const { body } = await this.client.cat.nodes({
             format: 'json',
@@ -17,85 +37,59 @@ module.exports = class ElasticSearchHandler {
         return body;
     }
 
-    async indexDocuments(index, id, favourite) {
+    async isDocumentPresent(documentIndex, documentID) {
         let documentChecker;
         try {
-            documentChecker = await this.readDocumentByID(id);
+            documentChecker = await this.readDocumentByID(documentIndex, documentID);
         } catch (error) {
             return error;
         }
+        console.log(documentChecker);
         let isDocumentPresent = documentChecker["body"]["found"] ? true : false;
-        if (isDocumentPresent) {
-            let formerDocumentData = documentChecker["body"]["_source"]["favourites"];
-            let consecutiveDocumentData = formerDocumentData.concat(",", favourite["favourites"]);
-            let updateDocumentBody = {
-                doc: {
-                    favourites: consecutiveDocumentData
-                }
-            };
-
-            let updateDocumentIndex = {
-                index: index,
-                id: id,
-                body: updateDocumentBody,
-            }
-
-            let documentUpdatingResult;
-
-            try {
-                documentUpdatingResult = await this.client.update(updateDocumentIndex);
-            } catch (updatingError) {
-                return updatingError;
-            }
-            return documentUpdatingResult;
-            
-        } else {
-            let newDocumentBody = {
-                favourites: favourite["favourites"]
-            };
-
-            let newDocumentIndex = {
-                index: index, 
-                id: id,
-                body: newDocumentBody,
-            };
-            
-            let documentIndexingResult;
-
-            try {
-                documentIndexingResult = await this.client.index(newDocumentIndex);
-            } catch(indexingError) {
-                return indexingError;
-            }
-            return documentIndexingResult;
+        let documentPresence = {
+            isDocumentPresent: isDocumentPresent,
+            document: documentChecker,
         }
+        return documentPresence;
     }
 
-    async readDocumentByID(id) {
-        const documentToBeRead = {
-            id: id,
-            index: 'users',
-        }
-        let readDocument;
-        try {
-            readDocument = await this.client.get(documentToBeRead);
-        } catch (error) {
-            return error;
-        }
-        return readDocument;
-    };
+    async indexDocuments(document) {
 
-    async deleteDocument(id) {
-        const documentToBeDeleted = {
-            id: id,
-            index: 'users',
-        }
-        let deletedDocument;
+        let documentIndexingResult;
+
         try {
-            deletedDocument = this.client.delete(documentToBeDeleted);
-        } catch (error) {
-            return error;
+            documentIndexingResult = await this.client.index(document);
+        } catch (indexingError) {
+            return indexingError;
         }
-        return deletedDocument;
+        return documentIndexingResult;
     }
+
+async readDocumentByID(documentIndex, documentID) {
+    const documentToBeRead = {
+        index: documentIndex,
+        id: documentID,
+    }
+    let readDocument;
+    try {
+        readDocument = await this.client.get(documentToBeRead);
+    } catch (error) {
+        return error;
+    }
+    return readDocument;
+};
+
+async deleteDocument(documentIndex, documentID) {
+    const documentToBeDeleted = {
+        index: documentIndex,
+        id: documentID,
+    }
+    let deletedDocument;
+    try {
+        deletedDocument = this.client.delete(documentToBeDeleted);
+    } catch (error) {
+        return error;
+    }
+    return deletedDocument;
+}
 }
