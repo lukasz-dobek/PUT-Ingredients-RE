@@ -32,7 +32,12 @@ const handlePost = async (documentIndex, documentID, fan) => {
   let documentPresenceFlag = documentPresenceObject.isDocumentPresent;
   if (documentPresenceFlag) {
     let formerDocumentData = documentPresenceObject.document["body"]["_source"]["fans"];
-    let consecutiveDocumentData = formerDocumentData.concat(",", fan["fans"]);
+    let consecutiveDocumentData;
+    if (formerDocumentData === "") {
+      consecutiveDocumentData = fan["fans"];
+    } else {
+      consecutiveDocumentData = formerDocumentData.concat(",", fan["fans"]);
+    }
     let updateDocumentBody = {
       fans: consecutiveDocumentData
 
@@ -62,6 +67,32 @@ const handlePost = async (documentIndex, documentID, fan) => {
   }
 }
 
+const handleDelete = async (documentIndex, documentID, favourite) => {
+  let documentPresenceObject = await handler.isDocumentPresent(documentIndex, documentID);
+
+  let formerDocumentData = documentPresenceObject.document["body"]["_source"]["fans"];
+
+  let formerDocumentArray = formerDocumentData.split(',');
+  let consecutiveDocumentArray = formerDocumentArray.filter(element => {
+    return element != favourite["fans"];
+  });
+
+  let consecutiveDocumentData = consecutiveDocumentArray.join(',');
+  
+  let updateDocumentBody = {
+      favourites: consecutiveDocumentData
+  };
+
+  let updateDocumentIndex = {
+    index: documentIndex,
+    id: documentID,
+    body: updateDocumentBody,
+  }
+
+  return updateDocumentIndex;
+}
+
+
 router.post('/:id', async (req, res) => {
   const { body } = req;
   let documentBody = await handlePost(documentIndexName, req.params.id, body);
@@ -72,9 +103,12 @@ router.post('/:id', async (req, res) => {
   });
 });
 
-router.delete('/:id', (req, res) => {
-  handler.deleteDocument(documentIndexName, req.params.id).then(result => {
+router.delete('/:id', async (req, res) => {
+  let documentBody = await handleDelete(documentIndexName, req.params.id, req.body);
+  handler.indexDocuments(documentBody).then(result => {
     res.send(result);
+  }).catch(error => {
+    console.log(error);
   });
 });
 

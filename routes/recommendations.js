@@ -5,6 +5,8 @@ const ElasticSearchHandler = require('../ElasticSearchHandler');
 const handler = new ElasticSearchHandler();
 const router = express.Router();
 
+
+// Czy potrzebny indeks? Zastanowic sie
 const documentIndexName = 'recommendations';
 const documentIndexMapping = {
   "mappings": {
@@ -29,10 +31,7 @@ router.get('/:id', (req, res) => {
 const collaborativeFiltering = async requestedUserID => {
     console.log("Starting collaborative filtering...");
     let userDocument = await handler.readDocumentByID('users', requestedUserID);
-    
-    let recipesLikedByUser = userDocument["body"]["_source"]["favourites"].split(",")
-    console.log(recipesLikedByUser);
-
+    let recipesLikedByUser = userDocument["body"]["_source"]["favourites"].split(",");
     let recipesAndWhoLikedThem = recipesLikedByUser.map(recipeId => {
         return {
             recipe: recipeId,

@@ -2,7 +2,7 @@ const { Client } = require('@elastic/elasticsearch')
 
 // docker run --rm --name database -d -p 5433:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
 
-// docker run -d --network host --name elastic --rm -e"http.port=10000" -e "discovery.type=single-node" elasticsearch:7.4.0 // moze potrzeba volume?
+// docker run -d --network host --name elastic --rm -e "http.port=10000" -e "discovery.type=single-node" -v $HOME/docker/volumes/elastic:/usr/share/elasticsearch/data elasticsearch:7.4.0
 
 module.exports = class ElasticSearchHandler {
 
@@ -65,31 +65,31 @@ module.exports = class ElasticSearchHandler {
         return documentIndexingResult;
     }
 
-async readDocumentByID(documentIndex, documentID) {
-    const documentToBeRead = {
-        index: documentIndex,
-        id: documentID,
-    }
-    let readDocument;
-    try {
-        readDocument = await this.client.get(documentToBeRead);
-    } catch (error) {
-        return error;
-    }
-    return readDocument;
-};
+    async readDocumentByID(documentIndex, documentID) {
+        const documentToBeRead = {
+            index: documentIndex,
+            id: documentID,
+        }
+        let readDocument;
+        try {
+            readDocument = await this.client.get(documentToBeRead);
+        } catch (error) {
+            return error;
+        }
+        return readDocument;
+    };
 
-async deleteDocument(documentIndex, documentID) {
-    const documentToBeDeleted = {
-        index: documentIndex,
-        id: documentID,
+    async deleteDocument(documentIndex, documentID) {
+        const documentToBeDeleted = {
+            index: documentIndex,
+            id: documentID,
+        }
+        let deletedDocument;
+        try {
+            deletedDocument = this.client.delete(documentToBeDeleted);
+        } catch (error) {
+            return error;
+        }
+        return deletedDocument;
     }
-    let deletedDocument;
-    try {
-        deletedDocument = this.client.delete(documentToBeDeleted);
-    } catch (error) {
-        return error;
-    }
-    return deletedDocument;
-}
 }
