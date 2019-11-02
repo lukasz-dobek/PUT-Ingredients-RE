@@ -6,7 +6,7 @@ const { Client } = require('@elastic/elasticsearch')
 
 module.exports = class ElasticSearchHandler {
 
-    constructor(address = 'http://localhost:10000') {
+    constructor(address = 'http://localhost:9200') {
         this.client = new Client({ node: address });
     }
 
