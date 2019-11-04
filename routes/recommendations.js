@@ -29,36 +29,44 @@ router.get('/:id', (req, res) => {
 });
 
 const collaborativeFiltering = async requestedUserID => {
+  let suggestedRecipes = [];
+
+  try {
     console.log("Starting collaborative filtering...");
     let userDocument = await handler.readDocumentByID('users', requestedUserID);
-    let recipesLikedByUser = userDocument["body"]["_source"]["favourites"].split(",");
-    let recipesAndWhoLikedThem = recipesLikedByUser.map(recipeId => {
+    if (userDocument.statusCode === 200) {
+      let recipesLikedByUser = userDocument["body"]["_source"]["favourites"].split(",");
+      let recipesAndWhoLikedThem = recipesLikedByUser.map(recipeId => {
         return {
-            recipe: recipeId,
-            users: [],
+          recipe: recipeId,
+          users: [],
         }
-    });
+      });
 
-    let suggestedRecipes = [];
 
-    for (const recipeObject of recipesAndWhoLikedThem){
+      for (const recipeObject of recipesAndWhoLikedThem) {
         let tempPromise = await handler.readDocumentByID('recipes', recipeObject["recipe"]);
         recipeObject["users"] = tempPromise["body"]["_source"]["fans"].split(",");
-        
+
         for (const userID of recipeObject["users"]) {
-            if (userID != requestedUserID) {
-                let otherUserDocument = await handler.readDocumentByID('users', userID);
-                let recipesLikedByOtherPerson = otherUserDocument["body"]["_source"]["favourites"].split(",");
-                let difference = recipesLikedByOtherPerson.filter(x => !recipesLikedByUser.includes(x));
-                for (const recipe of difference) {
-                    if (!suggestedRecipes.includes(recipe)){
-                        suggestedRecipes.push(recipe);
-                    }
-                }
+          if (userID != requestedUserID) {
+            let otherUserDocument = await handler.readDocumentByID('users', userID);
+            let recipesLikedByOtherPerson = otherUserDocument["body"]["_source"]["favourites"].split(",");
+            let difference = recipesLikedByOtherPerson.filter(x => !recipesLikedByUser.includes(x));
+            for (const recipe of difference) {
+              if (!suggestedRecipes.includes(recipe)) {
+                suggestedRecipes.push(recipe);
+              }
             }
+          }
         }
+      }
     }
+  } catch (e) {
+    console.log(e);
+  } finally {
     return suggestedRecipes;
+  }
 };
 
 module.exports = router;
