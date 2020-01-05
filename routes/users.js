@@ -27,43 +27,59 @@ router.get('/:id', (req, res) => {
 });
 
 const handlePost = async (documentIndex, documentID, favourite) => {
-  let documentPresenceObject = await handler.isDocumentPresent(documentIndex, documentID);
+  try {
+    let documentPresenceObject = await handler.isDocumentPresent(documentIndex, documentID);
+    let updateDocumentIndex;
+    let documentPresenceFlag = documentPresenceObject.isDocumentPresent;
+    if (documentPresenceFlag) {
+      let isThereData = documentPresenceObject.document["body"]["_source"]["favourites"] ? true : false;
+      console.log(isThereData);
+      if (isThereData) {
+        let formerDocumentData = documentPresenceObject.document["body"]["_source"]["favourites"];
+        let consecutiveDocumentData;
+        if (formerDocumentData === "") {
+          consecutiveDocumentData = favourite["favourites"];
+        } else {
+          consecutiveDocumentData = formerDocumentData.concat(",", favourite["favourites"]);
+        }
 
-  let documentPresenceFlag = documentPresenceObject.isDocumentPresent;
-  if (documentPresenceFlag) {
-    let formerDocumentData = documentPresenceObject.document["body"]["_source"]["favourites"];
-    let consecutiveDocumentData;
-    if (formerDocumentData === "") {
-      consecutiveDocumentData = fan["fans"];
+        let updateDocumentBody = {
+          favourites: consecutiveDocumentData
+        };
+
+        updateDocumentIndex = {
+          index: documentIndex,
+          id: documentID,
+          body: updateDocumentBody,
+        }
+      } else {
+        let updateDocumentBody = {
+          favourites: favourite["favourites"]
+        };
+
+        updateDocumentIndex = {
+          index: documentIndex,
+          id: documentID,
+          body: updateDocumentBody,
+        }
+      }
+      return updateDocumentIndex;
+
     } else {
-      consecutiveDocumentData = formerDocumentData.concat(",", favourite["favourites"]);
+      let newDocumentBody = {
+        favourites: favourite["favourites"]
+      };
+
+      let newDocumentIndex = {
+        index: documentIndex,
+        id: documentID,
+        body: newDocumentBody,
+      };
+
+      return newDocumentIndex;
     }
-
-    let updateDocumentBody = {
-        favourites: consecutiveDocumentData
-    };
-
-    let updateDocumentIndex = {
-      index: documentIndex,
-      id: documentID,
-      body: updateDocumentBody,
-    }
-
-    return updateDocumentIndex;
-
-  } else {
-
-    let newDocumentBody = {
-      favourites: favourite["favourites"]
-    };
-
-    let newDocumentIndex = {
-      index: documentIndex,
-      id: documentID,
-      body: newDocumentBody,
-    };
-
-    return newDocumentIndex;
+  } catch (er) {
+    if (er) console.log("users post response error");
   }
 }
 
@@ -80,7 +96,7 @@ const handleDelete = async (documentIndex, documentID, favourite) => {
   let consecutiveDocumentData = consecutiveDocumentArray.join(',');
 
   let updateDocumentBody = {
-      favourites: consecutiveDocumentData
+    favourites: consecutiveDocumentData
   };
 
   let updateDocumentIndex = {
@@ -99,7 +115,7 @@ router.post('/:id', async (req, res) => {
   handler.indexDocuments(documentBody).then(result => {
     res.send(result);
   }).catch(error => {
-    console.log(error);
+    console.log("err post users");
   });
 });
 
@@ -108,7 +124,7 @@ router.delete('/:id', async (req, res) => {
   handler.indexDocuments(documentBody).then(result => {
     res.send(result);
   }).catch(error => {
-    console.log(error);
+    console.log("err delete users");
   });
 });
 

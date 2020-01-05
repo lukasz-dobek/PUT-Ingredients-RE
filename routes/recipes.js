@@ -27,51 +27,65 @@ router.get('/:id', (req, res) => {
 });
 
 const handlePost = async (documentIndex, documentID, fan) => {
-  let documentPresenceObject = await handler.isDocumentPresent(documentIndex, documentID);
+  try {
+    let documentPresenceObject = await handler.isDocumentPresent(documentIndex, documentID);
+    let documentPresenceFlag = documentPresenceObject.isDocumentPresent;
+    if (documentPresenceFlag) {
+      let isThereData = documentPresenceObject.document["body"]["_source"]["fans"] ? true : false;
+      console.log(isThereData);
+      if (isThereData) {
+        let formerDocumentData = documentPresenceObject.document["body"]["_source"]["fans"];
+        let consecutiveDocumentData;
+        if (formerDocumentData === "") {
+          consecutiveDocumentData = fan["fans"];
+        } else {
+          consecutiveDocumentData = formerDocumentData.concat(",", fan["fans"]);
+        }
 
-  let documentPresenceFlag = documentPresenceObject.isDocumentPresent;
-  if (documentPresenceFlag) {
-    let formerDocumentData = documentPresenceObject.document["body"]["_source"]["fans"];
-    let consecutiveDocumentData;
-    if (formerDocumentData === "") {
-      consecutiveDocumentData = fan["fans"];
+        let updateDocumentBody = {
+          fans: consecutiveDocumentData
+        };
+
+        updateDocumentIndex = {
+          index: documentIndex,
+          id: documentID,
+          body: updateDocumentBody,
+        }
+      } else {
+        let updateDocumentBody = {
+          fans: fan["fans"]
+        };
+
+        updateDocumentIndex = {
+          index: documentIndex,
+          id: documentID,
+          body: updateDocumentBody,
+        }
+      }
+      return updateDocumentIndex;  
     } else {
-      consecutiveDocumentData = formerDocumentData.concat(",", fan["fans"]);
+      let newDocumentBody = {
+        fans: fan["fans"]
+      };
+  
+      let newDocumentIndex = {
+        index: documentIndex,
+        id: documentID,
+        body: newDocumentBody,
+      };
+  
+      return newDocumentIndex;
     }
-    let updateDocumentBody = {
-      fans: consecutiveDocumentData
-
-    };
-
-    let updateDocumentIndex = {
-      index: documentIndex,
-      id: documentID,
-      body: updateDocumentBody,
-    }
-
-    return updateDocumentIndex;
-
-  } else {
-
-    let newDocumentBody = {
-      fans: fan["fans"]
-    };
-
-    let newDocumentIndex = {
-      index: documentIndex,
-      id: documentID,
-      body: newDocumentBody,
-    };
-
-    return newDocumentIndex;
-  }
+  } catch (er) {
+    if (er) console.log("recipes post response error");
+  } 
 }
 
 const handleDelete = async (documentIndex, documentID, favourite) => {
   let documentPresenceObject = await handler.isDocumentPresent(documentIndex, documentID);
 
   let formerDocumentData = documentPresenceObject.document["body"]["_source"]["fans"];
-
+  console.log(formerDocumentData);
   let formerDocumentArray = formerDocumentData.split(',');
   let consecutiveDocumentArray = formerDocumentArray.filter(element => {
     return element != favourite["fans"];
@@ -99,7 +113,7 @@ router.post('/:id', async (req, res) => {
   handler.indexDocuments(documentBody).then(result => {
     res.send(result);
   }).catch(error => {
-    console.log(error);
+    console.log("err post recipe");
   });
 });
 
@@ -108,7 +122,7 @@ router.delete('/:id', async (req, res) => {
   handler.indexDocuments(documentBody).then(result => {
     res.send(result);
   }).catch(error => {
-    console.log(error);
+    console.log("err delete recipe");
   });
 });
 

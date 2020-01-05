@@ -42,9 +42,8 @@ module.exports = class ElasticSearchHandler {
         try {
             documentChecker = await this.readDocumentByID(documentIndex, documentID);
         } catch (error) {
-            return error;
+            console.log(`ResponseError in ${this.name}`);
         }
-        console.log(documentChecker);
         let isDocumentPresent = documentChecker["body"]["found"] ? true : false;
         let documentPresence = {
             isDocumentPresent: isDocumentPresent,
