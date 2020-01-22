@@ -5,8 +5,6 @@ const ElasticSearchHandler = require('../ElasticSearchHandler');
 const handler = new ElasticSearchHandler();
 const router = express.Router();
 
-
-// Czy potrzebny indeks? Zastanowic sie
 const documentIndexName = 'recommendations';
 const documentIndexMapping = {
   "mappings": {

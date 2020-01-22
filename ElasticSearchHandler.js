@@ -1,9 +1,5 @@
 const { Client } = require('@elastic/elasticsearch')
 
-// docker run --rm --name database -d -p 5433:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
-
-// docker run -d --network host --name elastic --rm -e "http.port=10000" -e "discovery.type=single-node" -v $HOME/docker/volumes/elastic:/usr/share/elasticsearch/data elasticsearch:7.4.0
-
 module.exports = class ElasticSearchHandler {
 
     constructor(address = 'http://localhost:9200') {

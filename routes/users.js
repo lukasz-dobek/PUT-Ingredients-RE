@@ -33,7 +33,6 @@ const handlePost = async (documentIndex, documentID, favourite) => {
     let documentPresenceFlag = documentPresenceObject.isDocumentPresent;
     if (documentPresenceFlag) {
       let isThereData = documentPresenceObject.document["body"]["_source"]["favourites"] ? true : false;
-      console.log(isThereData);
       if (isThereData) {
         let formerDocumentData = documentPresenceObject.document["body"]["_source"]["favourites"];
         let consecutiveDocumentData;

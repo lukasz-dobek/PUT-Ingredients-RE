@@ -85,7 +85,7 @@ const handleDelete = async (documentIndex, documentID, favourite) => {
   let documentPresenceObject = await handler.isDocumentPresent(documentIndex, documentID);
 
   let formerDocumentData = documentPresenceObject.document["body"]["_source"]["fans"];
-  console.log(formerDocumentData);
+  
   let formerDocumentArray = formerDocumentData.split(',');
   let consecutiveDocumentArray = formerDocumentArray.filter(element => {
     return element != favourite["fans"];
